@@ -8,10 +8,16 @@ export interface IFile {
   title: string;
   user: string;
   url_private: string;
+  timestamp?: number;
 }
 
 export interface Config {
   channel: string;
+  files?: EnvFile[];
+}
+
+export interface EnvFile {
+  path: string;
   include?: string[];
 }
 

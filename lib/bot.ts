@@ -30,14 +30,17 @@ class SlackBot {
     return channels.filter((channel) => channel.name === channelName)[0];
   }
 
-  async latestFile(channel: Channel): Promise<IFile | null> {
+  async latestFile(channel: Channel, filename: string): Promise<IFile | null> {
     const { user_id: SLACK_BOT_ID } = await this.web.auth.test();
     const { files } = await this.web.files.list({
       channel: channel.id,
       user: `${SLACK_BOT_ID}`,
-      count: 1,
     });
-    return files[0] || null;
+
+    const matchingFiles: IFile[] = (files as IFile[])
+      .filter((f) => f.title === filename)
+      .sort((a, b) => b.timestamp - a.timestamp);
+    return matchingFiles[0] || null;
   }
 
   async fileContents(file: IFile) {
@@ -49,11 +52,13 @@ class SlackBot {
     return data;
   }
 
-  async upload(env: string, channel: Channel) {
+  async upload(env: string, channel: Channel, filename: string) {
     return tempWrite(env).then((filePath) => {
       const file = readFileSync(filePath);
+
       return this.web.files.upload({
-        filename: Date.now().toString(),
+        filename,
+        title: filename,
         file,
         channels: channel.name,
       });

@@ -4,14 +4,22 @@ import parseEnv from "parse-dotenv";
 import tempWrite from "temp-write";
 import bot from "./bot";
 import { Config } from "./models";
-import { getEnvContents, keys, exit, valuesSyncCheck } from "./utils";
+import {
+  getEnvContents,
+  keys,
+  exit,
+  valuesSyncCheck,
+  stringToEnv,
+  getFilenameFromPath,
+} from "./utils";
+import { readFileSync } from "fs";
 
 dotenv.config();
 
 export const alertChannel = async (options: Config) => {
   const spinner = ora("one moment").start();
   try {
-    const { channel: channelName, include: patterns } = options;
+    const { channel: channelName, files } = options;
 
     if (!channelName) return exit(1, spinner, "channel name is required");
 
@@ -27,33 +35,44 @@ export const alertChannel = async (options: Config) => {
     }
 
     spinner.text = `found ${channelName} channel`;
-    const localEnv = parseEnv();
-    const latestFileFromBot = await bot.latestFile(channel);
 
-    if (latestFileFromBot && latestFileFromBot.url_private) {
-      spinner.text = "comparing envs";
-      const fileContents = await bot.fileContents(latestFileFromBot);
-      const slackEnv = parseEnv(tempWrite.sync(fileContents));
-      const variables = keys(localEnv).every((key) =>
-        slackEnv.hasOwnProperty(key)
-      );
-      const keysInSync =
-        variables && keys(localEnv).length === keys(slackEnv).length;
+    for (const file of files) {
+      const { include: patterns } = file;
+      const filename = getFilenameFromPath(file.path);
+      const localEnv = stringToEnv(readFileSync(file.path, "utf-8"));
 
-      const valuesInSync = valuesSyncCheck(localEnv, slackEnv, patterns);
-      const inSync = keysInSync && valuesInSync;
+      const latestFileFromBot = await bot.latestFile(channel, filename);
 
-      if (!inSync) {
-        spinner.text = "env not in sync";
+      if (latestFileFromBot && latestFileFromBot.url_private) {
+        spinner.text = "comparing envs";
+        const fileContents = await bot.fileContents(latestFileFromBot);
+        const slackEnv = parseEnv(tempWrite.sync(fileContents));
+        const variables = keys(localEnv).every((key) =>
+          slackEnv.hasOwnProperty(key)
+        );
+        const keysInSync =
+          variables && keys(localEnv).length === keys(slackEnv).length;
+
+        const valuesInSync = valuesSyncCheck(localEnv, slackEnv, patterns);
+        const inSync = keysInSync && valuesInSync;
+
+        if (!inSync) {
+          spinner.text = "env not in sync";
+          spinner.text = "synchronizing env with slack channel";
+          await bot.upload(
+            getEnvContents(localEnv, patterns),
+            channel,
+            filename
+          );
+          spinner.succeed("sync successful 🎉");
+        } else spinner.info("env in sync");
+      } else {
         spinner.text = "synchronizing env with slack channel";
-        await bot.upload(getEnvContents(localEnv, patterns), channel);
+        await bot.upload(getEnvContents(localEnv, patterns), channel, filename);
         spinner.succeed("sync successful 🎉");
-      } else spinner.info("env in sync");
-    } else {
-      spinner.text = "synchronizing env with slack channel";
-      await bot.upload(getEnvContents(localEnv, patterns), channel);
-      spinner.succeed("sync successful 🎉");
+      }
     }
+
     exit(0, spinner);
   } catch (error) {
     exit(1, spinner, "failed to sync env");
