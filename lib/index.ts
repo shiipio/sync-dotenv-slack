@@ -19,7 +19,7 @@ dotenv.config();
 export const alertChannel = async (options: Config) => {
   const spinner = ora("one moment").start();
   try {
-    const { channel: channelName, files } = options;
+    const { channel: channelName, files, name } = options;
 
     if (!channelName) return exit(1, spinner, "channel name is required");
 
@@ -38,10 +38,10 @@ export const alertChannel = async (options: Config) => {
 
     for (const file of files) {
       const { include: patterns } = file;
-      const filename = getFilenameFromPath(file.path);
+      const title = `${name} ${getFilenameFromPath(file.path)}`;
       const localEnv = stringToEnv(readFileSync(file.path, "utf-8"));
 
-      const latestFileFromBot = await bot.latestFile(channel, filename);
+      const latestFileFromBot = await bot.latestFile(channel, title);
 
       if (latestFileFromBot && latestFileFromBot.url_private) {
         spinner.text = "comparing envs";
@@ -59,16 +59,12 @@ export const alertChannel = async (options: Config) => {
         if (!inSync) {
           spinner.text = "env not in sync";
           spinner.text = "synchronizing env with slack channel";
-          await bot.upload(
-            getEnvContents(localEnv, patterns),
-            channel,
-            filename
-          );
+          await bot.upload(getEnvContents(localEnv, patterns), channel, title);
           spinner.succeed("sync successful 🎉");
         } else spinner.info("env in sync");
       } else {
         spinner.text = "synchronizing env with slack channel";
-        await bot.upload(getEnvContents(localEnv, patterns), channel, filename);
+        await bot.upload(getEnvContents(localEnv, patterns), channel, title);
         spinner.succeed("sync successful 🎉");
       }
     }

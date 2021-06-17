@@ -1,9 +1,10 @@
-import { cursorPaginationEnabledMethods, WebClient } from "@slack/web-api";
+import { WebClient } from "@slack/web-api";
 import { Token, Channel, IFile } from "./models";
 import Axios from "axios";
 import tempWrite from "temp-write";
 import { readFileSync } from "fs";
 import dotenv from "dotenv";
+import { getFilenameFromPath } from "./utils";
 
 dotenv.config();
 const { ENVBOT_SLACK_BOT_TOKEN: botToken } = process.env;
@@ -30,7 +31,7 @@ class SlackBot {
     return channels.filter((channel) => channel.name === channelName)[0];
   }
 
-  async latestFile(channel: Channel, filename: string): Promise<IFile | null> {
+  async latestFile(channel: Channel, title: string): Promise<IFile | null> {
     const { user_id: SLACK_BOT_ID } = await this.web.auth.test();
     const { files } = await this.web.files.list({
       channel: channel.id,
@@ -38,7 +39,7 @@ class SlackBot {
     });
 
     const matchingFiles: IFile[] = (files as IFile[])
-      .filter((f) => f.title === filename)
+      .filter((f) => f.title === title)
       .sort((a, b) => b.timestamp - a.timestamp);
     return matchingFiles[0] || null;
   }
@@ -52,13 +53,13 @@ class SlackBot {
     return data;
   }
 
-  async upload(env: string, channel: Channel, filename: string) {
+  async upload(env: string, channel: Channel, title: string) {
     return tempWrite(env).then((filePath) => {
       const file = readFileSync(filePath);
-
+      const filename = getFilenameFromPath(filePath);
       return this.web.files.upload({
         filename,
-        title: filename,
+        title,
         file,
         channels: channel.name,
       });

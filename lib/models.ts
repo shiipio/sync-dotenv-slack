@@ -13,6 +13,7 @@ export interface IFile {
 
 export interface Config {
   channel: string;
+  name: string;
   files?: EnvFile[];
 }
 
