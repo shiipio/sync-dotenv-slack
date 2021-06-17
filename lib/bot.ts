@@ -1,15 +1,13 @@
-import { WebClient } from '@slack/web-api';
-import { Token, Channel, IFile } from './models';
-import Axios from 'axios';
-import tempWrite from 'temp-write';
-import { readFileSync } from 'fs';
-import dotenv from 'dotenv';
+import { cursorPaginationEnabledMethods, WebClient } from "@slack/web-api";
+import { Token, Channel, IFile } from "./models";
+import Axios from "axios";
+import tempWrite from "temp-write";
+import { readFileSync } from "fs";
+import dotenv from "dotenv";
 
 dotenv.config();
-const {
-  ENVBOT_SLACK_BOT_TOKEN: botToken,
-  ENVBOT_SLACK_USER_TOKEN: userToken
-} = process.env;
+const { ENVBOT_SLACK_BOT_TOKEN: botToken, ENVBOT_SLACK_USER_TOKEN: userToken } =
+  process.env;
 
 class SlackBot {
   web: WebClient;
@@ -25,14 +23,14 @@ class SlackBot {
   async channels(): Promise<Channel[]> {
     const { channels } = await this.web.conversations.list({
       exclude_archived: true,
-      types: 'public_channel,private_channel'
+      types: "private_channel",
     });
     return channels as Channel[];
   }
 
   async channel(channelName: string): Promise<Channel> {
     const channels = await this.channels();
-    return channels.filter(channel => channel.name === channelName)[0];
+    return channels.filter((channel) => channel.name === channelName)[0];
   }
 
   async latestFile(channel: Channel): Promise<IFile | null> {
@@ -41,7 +39,6 @@ class SlackBot {
       channel: channel.id,
       user: `${SLACK_BOT_ID}`,
       count: 1,
-      token: this.userToken
     });
     return files[0] || null;
   }
@@ -49,19 +46,19 @@ class SlackBot {
   async fileContents(file: IFile) {
     const { data } = await Axios.get(file.url_private, {
       headers: {
-        Authorization: `Bearer ${this.botToken}`
-      }
+        Authorization: `Bearer ${this.botToken}`,
+      },
     });
     return data;
   }
 
   async upload(env: string, channel: Channel) {
-    return tempWrite(env).then(filePath => {
+    return tempWrite(env).then((filePath) => {
       const file = readFileSync(filePath);
       return this.web.files.upload({
         filename: Date.now().toString(),
         file,
-        channels: channel.name
+        channels: channel.name,
       });
     });
   }
