@@ -6,18 +6,15 @@ import { readFileSync } from "fs";
 import dotenv from "dotenv";
 
 dotenv.config();
-const { ENVBOT_SLACK_BOT_TOKEN: botToken, ENVBOT_SLACK_USER_TOKEN: userToken } =
-  process.env;
+const { ENVBOT_SLACK_BOT_TOKEN: botToken } = process.env;
 
 class SlackBot {
   web: WebClient;
   botToken: string;
-  userToken: string;
 
   constructor(token: Token) {
     this.web = new WebClient(token.botToken);
     this.botToken = token.botToken;
-    this.userToken = token.userToken;
   }
 
   async channels(): Promise<Channel[]> {
@@ -64,4 +61,4 @@ class SlackBot {
   }
 }
 
-export default new SlackBot({ botToken, userToken });
+export default new SlackBot({ botToken });

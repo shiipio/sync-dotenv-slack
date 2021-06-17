@@ -21,5 +21,4 @@ export interface Env {
 
 export interface Token {
   botToken: string;
-  userToken: string;
 }
