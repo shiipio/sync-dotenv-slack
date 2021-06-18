@@ -19,6 +19,7 @@ export interface Config {
 
 export interface EnvFile {
   path: string;
+  type: string;
   include?: string[];
 }
 

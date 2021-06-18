@@ -9,6 +9,7 @@
     "build": "npm-run-all --parallel clean bundle",
     "build:start": "npm run build -- start",
     "dev": "nodemon --ext ts,json --exec 'npm run build && node dist/cli.js'",
+    "dev:check": "nodemon --ext ts,json --exec 'npm run build && node dist/cli.js --check'",
     "start": "node dist/cli.js",
     "test": "jest",
     "test:coverage": "jest --coverage --coverageReporters=text-lcov | coveralls",

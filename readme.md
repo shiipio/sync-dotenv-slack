@@ -43,7 +43,8 @@ $ npm install -D sync-dotenv-slack
 - Create a Slack Bot app (with required permissions) for your workspace.
 - Add `files:read` `files:write` `groups:read` permissions
 - Add Slack app tokens to your project `.env`
-  ```
+
+  ```sh
   ENVBOT_SLACK_BOT_TOKEN=xoxb-******-******-******
   ```
 
@@ -58,19 +59,28 @@ To use this tool, an `envbot` object needs to be added to your project's `packag
     "sync-dotenv-slack": "envbot"
   },
   "envbot": {
-    "channel": "general",
+    "channel": "app-mm-env",
     "files": [
       {
         "path": ".env",
+        "type": "env",
+        "include": [
+          "*",
+          "!SECRET"
+        ]
+      },
+      {
+        "path": "env.json",
+        "type": "json",
         "include": [
           "*"
         ]
       },
       {
-        "path": "path/to/.env.dev",
+        "path": "path/to/.env",
+        "type": "json",
         "include": [
-          "*",
-          "!SECRET",
+          "*"
         ]
       }
     ]
@@ -98,19 +108,19 @@ Automagically sync before every push using [husky](https://github.com/typicode/h
 
 You can configure the `envbot` object with the following options in package.json
 
-#### channel
+### channel
 
 Type: `string`
 
 Slack channel (name) to post/upload env to.
 
-#### include
+### include
 
 Type: `[string]`
 
 An array of environment variable(s) to include/exclude their values when posting to Slack.
 
-##### Using the include option
+#### Using the include option
 
 ```bash
 # include all env values

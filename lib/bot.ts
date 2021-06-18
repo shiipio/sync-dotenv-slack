@@ -41,6 +41,7 @@ class SlackBot {
     const matchingFiles: IFile[] = (files as IFile[])
       .filter((f) => f.title === title)
       .sort((a, b) => b.timestamp - a.timestamp);
+
     return matchingFiles[0] || null;
   }
 

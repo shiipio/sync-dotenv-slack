@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { Env } from "./models";
+import { Env, EnvFile } from "./models";
 import { Ora } from "ora";
 
 export const getEnv = (path: string = ".env") => readFileSync(path);
@@ -61,12 +61,21 @@ export const valuesSyncCheck = (
 ): boolean => {
   const finalLocalEnv = getFinalEnvObj(localEnv, patterns);
   return keys(finalLocalEnv)
-    .map((key) => finalLocalEnv[key] === slackEnv[key])
+    .map((key) => {
+      return (
+        JSON.stringify(finalLocalEnv[key]) === JSON.stringify(slackEnv[key])
+      );
+    })
     .every((sync) => sync === true);
 };
 
-export const getEnvContents = (env: Env, patterns: string[]) => {
-  return envToString(getFinalEnvObj(env, patterns));
+export const getEnvContents = (env: Env, patterns: string[], type: string) => {
+  switch (type) {
+    case "env":
+      return envToString(getFinalEnvObj(env, patterns));
+    case "json":
+      return JSON.stringify(env, null, 2);
+  }
 };
 
 export const exit = (code: number, spinner: Ora, msg?: string) => {
@@ -77,4 +86,15 @@ export const exit = (code: number, spinner: Ora, msg?: string) => {
 
 export const getFilenameFromPath = (path: string) => {
   return path.replace(/^.*[\\\/]/, "");
+};
+
+export const getKeyValuesFromFile = (type: string, fileContent: string) => {
+  switch (type) {
+    case "env":
+      return stringToEnv(fileContent);
+    case "json":
+      return typeof fileContent === "string"
+        ? JSON.parse(fileContent)
+        : fileContent;
+  }
 };
