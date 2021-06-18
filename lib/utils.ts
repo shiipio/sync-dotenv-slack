@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { Env, EnvFile } from "./models";
+import { Env } from "./models";
 import { Ora } from "ora";
 
 export const getEnv = (path: string = ".env") => readFileSync(path);
